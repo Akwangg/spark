@@ -29,8 +29,8 @@ class AskwangSparkSuite extends QueryTest with SharedSparkSession with AdaptiveS
 
   setupTestData()
 
-  /** todo: test failed. 无效的源发行版: 17.*/
   test("create table/create table like/create table as select") {
+    // todo: test failed. 无效的源发行版: 17.
     withTable("tb") {
       withSQLConf(SQLConf.PLAN_CHANGE_LOG_LEVEL.key -> "INFO",
         SQLConf.DATETIME_JAVA8API_ENABLED.key -> "true") {
