@@ -257,6 +257,7 @@ case class ShuffleExchangeExec(
   protected override def doExecute(): RDD[InternalRow] = {
     // The ShuffleRowRDD will be cached in SparkPlan.executeRDD and reused if this plan is used by
     // multiple plans.
+    // shuffleDependency lazy 加载，触发一些关键调用
     new ShuffledRowRDD(shuffleDependency, readMetrics)
   }
 
@@ -341,6 +342,9 @@ object ShuffleExchangeExec {
     val part: Partitioner = newPartitioning match {
       case RoundRobinPartitioning(numPartitions) => new HashPartitioner(numPartitions)
       case HashPartitioning(_, n) =>
+        // HashPartitioning 的 partitionIdExpression 已经对 partition id 进行了计算，所以不需要再次进行分区划分
+        // def partitionIdExpression: Expression = Pmod(new Murmur3Hash(expressions), Literal(numPartitions))
+        // n 是指 numPartitions 分区个数
         // For HashPartitioning, the partitioning key is already a valid partition ID, as we use
         // `HashPartitioning.partitionIdExpression` to produce partitioning key.
         new PartitionIdPassthrough(n)
@@ -391,6 +395,7 @@ object ShuffleExchangeExec {
           position
         }
       case h: HashPartitioning =>
+        // 创建 Projection 映射（投影），具体每条 row 如何进行划分（可以理解为 row 对于哪个 bucket）
         val projection = UnsafeProjection.create(h.partitionIdExpression :: Nil, outputAttributes)
         row => projection(row).getInt(0)
       case RangePartitioning(sortingExpressions, _) =>
