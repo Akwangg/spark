@@ -29,6 +29,10 @@ class AskwangSparkSuite extends QueryTest with SharedSparkSession with AdaptiveS
 
   setupTestData()
 
+  test("note test entry") {
+    // OuterJoinEliminationSuite: 消除 outer join 到 inner
+  }
+
   test("create table/create table like/create table as select") {
     withTable("tb") {
       withSQLConf(SQLConf.PLAN_CHANGE_LOG_LEVEL.key -> "INFO",
