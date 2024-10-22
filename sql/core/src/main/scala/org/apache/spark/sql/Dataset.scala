@@ -1473,6 +1473,8 @@ class Dataset[T] private[sql](
          |For range partitioning use repartitionByRange(...) instead.
        """.stripMargin)
     withTypedPlan {
+      // partitionExprs: Seq[Column] 转换为 Seq[Expression]
+      // class Column(val expr: Expression)
       RepartitionByExpression(partitionExprs.map(_.expr), logicalPlan, numPartitions)
     }
   }

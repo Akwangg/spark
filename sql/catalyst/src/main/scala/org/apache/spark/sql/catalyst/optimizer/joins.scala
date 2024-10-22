@@ -191,7 +191,8 @@ object EliminateOuterJoin extends Rule[LogicalPlan] with PredicateHelper {
     // full outer join => inner join, left/right outer join
     // 判断 join 左右表是否有非空的过滤操作
     // 比如 left outer join，右表存在 Filter a > 0
-    // todo: 理论情况下 left outer join 与右表关联不上的的列为 null，但由于右表加了过滤条件，列一定不存在 null 值。
+    // left outer join 与右表关联不上的的列为 null，但由于右表加了过滤条件，列一定不存在 null 值。
+    // 这里的关键点在于，先 join 再 where 过滤，右表为 null 的一定会被过滤掉
     join.joinType match {
       case RightOuter if leftHasNonNullPredicate => Inner
       case LeftOuter if rightHasNonNullPredicate => Inner
