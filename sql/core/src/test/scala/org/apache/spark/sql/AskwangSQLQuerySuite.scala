@@ -18,6 +18,7 @@
 package org.apache.spark.sql
 
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
+import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
 import org.apache.spark.tags.ExtendedSQLTest
 import org.apache.spark.util.ResetSystemProperties
@@ -92,9 +93,20 @@ class AskwangSQLQuerySuite extends QueryTest with SharedSparkSession with Adapti
     }
   }
 
+  test("[askwang-test] create table column with default value") {
+    withSQLConf() {
+      spark.sql("create table t (id int, name string) using parquet")
+      spark.sql("insert into t values (1, 'a')")
+
+      spark.sql("alter table t add column c int default 100")
+
+      spark.sql("select * from t").show(false)
+    }
+  }
+
 
   test("[askwang-test] xxx") {
-    withSQLConf() {
+    withSQLConf(SQLConf.CASE_SENSITIVE.key -> "true") {
       sql("create table t1 (id1 int, name string) using parquet")
       sql("create table t2 (id2 int, age int) using parquet")
 
@@ -104,6 +116,19 @@ class AskwangSQLQuerySuite extends QueryTest with SharedSparkSession with Adapti
       val query = sql("select t1.id1, t1.name,t2.id2,t2.age from t1 left join t2 on t1.id1 = t2.id2 where t2.id2 < 5")
       query.show()
       query.explain(true)
+    }
+  }
+
+  test("left outer join") {
+    withSQLConf(SQLConf.CASE_SENSITIVE.key -> "true") {
+      checkAnswer(
+        sql("SELECT * FROM uppercasedata LEFT OUTER JOIN lowercasedata ON n = N"),
+        Row(1, "A", 1, "a") ::
+          Row(2, "B", 2, "b") ::
+          Row(3, "C", 3, "c") ::
+          Row(4, "D", 4, "d") ::
+          Row(5, "E", null, null) ::
+          Row(6, "F", null, null) :: Nil)
     }
   }
 }

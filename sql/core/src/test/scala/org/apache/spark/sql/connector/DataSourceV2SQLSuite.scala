@@ -111,6 +111,17 @@ class DataSourceV2SQLSuiteV1Filter
     checkAnswer(spark.internalCreateDataFrame(rdd, table.schema), Seq.empty)
   }
 
+  test("[askwang-test] create table column with default value") {
+    withSQLConf() {
+      spark.sql("create table t (id int, name string) using foo")
+      spark.sql("insert into t values (1, 'a')")
+
+      spark.sql("alter table t add column c int default 100").explain(true)
+
+      spark.sql("select * from t").show(false)
+    }
+  }
+
   test("Describe column for v2 catalog") {
     val t = "testcat.tbl"
     withTable(t) {
@@ -3605,6 +3616,8 @@ class DataSourceV2SQLSuiteV1Filter
     withSQLConf(SQLConf.DEFAULT_COLUMN_ALLOWED_PROVIDERS.key -> v2Source) {
       withTable("tab") {
         spark.sql(s"CREATE TABLE tab (col1 INT DEFAULT 100) USING $v2Source")
+
+        spark.sql(s"ALTER TABLE tab ADD COLUMN col2 int DEFAULT 100").explain(true)
         val exception = intercept[AnalysisException] {
           // Rand function is not foldable
           spark.sql(s"ALTER TABLE tab ADD COLUMN col2 DOUBLE DEFAULT rand()")

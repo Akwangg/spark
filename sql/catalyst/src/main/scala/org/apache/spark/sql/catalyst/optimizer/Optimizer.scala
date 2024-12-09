@@ -81,6 +81,7 @@ abstract class Optimizer(catalogManager: CatalogManager)
         PushProjectionThroughUnion,
         PushProjectionThroughLimit,
         ReorderJoin,
+        // outer join => inner join
         EliminateOuterJoin,
         PushDownPredicates,
         PushDownLeftSemiAntiJoin,
@@ -142,6 +143,8 @@ abstract class Optimizer(catalogManager: CatalogManager)
         operatorOptimizationRuleSet: _*) ::
       Batch("Infer Filters", Once,
         InferFiltersFromGenerate,
+        // 推断 filter 条件
+        // 比如 join 条件两边的列都不能为空，因此会增加 Filter isnotnull(field) 节点
         InferFiltersFromConstraints) ::
       Batch("Operator Optimization after Inferring Filters", fixedPoint,
         operatorOptimizationRuleSet: _*) ::
@@ -1463,6 +1466,7 @@ object InferFiltersFromConstraints extends Rule[LogicalPlan]
   with PredicateHelper with ConstraintHelper {
 
   def apply(plan: LogicalPlan): LogicalPlan = {
+    // 默认为 true
     if (conf.constraintPropagationEnabled) {
       inferFilters(plan)
     } else {
