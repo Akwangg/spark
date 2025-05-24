@@ -73,6 +73,8 @@ case class BatchScanExec(
       val filterableScan = scan.asInstanceOf[SupportsRuntimeV2Filtering]
       filterableScan.filter(dataSourceFilters.toArray)
 
+      // 重要的接口，Scan 和 Batch 接口
+      // 返回 Array[InputPartition]，即 DataSourceRDD 的分区信息
       // call toBatch again to get filtered partitions
       val newPartitions = scan.toBatch.planInputPartitions()
 
@@ -256,6 +258,7 @@ case class BatchScanExec(
         case _ => filteredPartitions
       }
 
+      // BatchScanExec#doExecute() 构建的 RDD
       new DataSourceRDD(
         sparkContext, finalPartitions, readerFactory, supportsColumnar, customMetrics)
     }
